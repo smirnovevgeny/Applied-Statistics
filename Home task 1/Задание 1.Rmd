@@ -1,0 +1,105 @@
+---
+title: "Статистический анализ данных (задание 1)"
+author: "Смирнов Евгений, 274 группа"
+date: "Март 27, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, out.width='900px')
+```
+
+```{r, echo = FALSE}
+load("~/Rprojects/прикладная статистика/Home 1/data.RData")
+```
+
+Требуется исследовать поведение указанного критерий знаковых рангов Уилкоксона в условиях нарушения предположения о симметричности распределения относительно медианы. Оценить мощность и достигаемый уровень значимости критерия при различных значениях параметров, сделать выводы об устойчивости.
+Исходные параметры эксперимента выглядят следующим образом:
+$$X^n,\ X \sim p \cdot N(\mu,1) + (1-p) \cdot (\chi^2_4 - \frac{10}{3} + \mu)$$
+$$H_0: \textit{med}X = 0$$
+$$H_1: \textit{med}X \ne 0$$
+$$\mu = 0:0.01:1,\ p = 0:0.01:1,\ n = 30 $$
+Установим необходимые параметры эксперимента и создадим нужные переменные для сохранения достигаемых уровней значимости и оценок мощностей при различных значениях параметров:
+
+```{r inception, eval=FALSE}
+tmp <- proc.time()
+mus <- seq(0,1, by=0.01)
+ps <- seq(0,1,by=0.01)
+musN <- length(mus)
+psN <- length(ps)
+nsample <- 30
+grid <- expand.grid(x = mus, y = ps)
+N_exps <- 2000
+getElement <- function(x, mu) {
+  if (x) {
+    return(rnorm(1,mean = mu))
+  }
+  else {
+    return(rchisq(1,4)-10/3+mu)
+  }
+}
+getSample <- function(mu, p, nsample=30) {
+  rands <- runif(nsample)
+  model <- rands < p
+  values <- rep(0,N_exps)
+  for (k in 1:N_exps) {
+    values[k] = wilcox.test(sapply(model, getElement, mu = mu))$p.value
+  }
+  c(mean(values),sum(values <=0.05)/N_exps)
+  
+}
+```
+
+Запустим алгоритм, который позволит вычислить все необходимые значения:
+
+```{r p and mu, eval=FALSE}
+samples<- mapply(getSample, grid$x, grid$y, SIMPLIFY = TRUE)
+PVs<-matrix(samples[1,], musN, psN)
+PWs <- matrix(samples[2,], musN, psN)
+```
+
+Полученные достигаемые уровни значимости при разных значениях параметров $\mu$ и $p$:
+```{r p and mu plot, message=FALSE}
+library(fields)
+par(pty="s")
+par(mfrow=c(1,2))
+par(mar = c(0,5,1,1))
+image.plot(matrix(grid$x, nrow=musN, ncol=psN), matrix(grid$y, nrow=musN, ncol=psN), PVs,
+           col = colorRampPalette(c("blue", "cyan", "yellow", "red"))(1024),
+           main="p-value", xlab=expression(mu), ylab=expression(p))
+image.plot(matrix(grid$x, nrow=musN, ncol=psN), matrix(grid$y, nrow=musN, ncol=psN), PWs,
+           col = colorRampPalette(c("blue", "cyan", "yellow", "red"))(1024),
+           main="power", xlab=expression(mu), ylab=expression(p))
+```
+
+Вычтем строку при $p = 1$.
+
+```{r no first line}
+par(pty="s")
+par(mfrow=c(1,2))
+par(mar = c(0,5,1,1))
+image.plot(matrix(grid$x, nrow=musN, ncol=psN), matrix(grid$y, nrow=musN, ncol=psN), PVs-PVs[,psN],
+           col = colorRampPalette(c("blue", "cyan", "yellow", "red"))(1024),
+           main="p-value", xlab=expression(mu), ylab=expression(p))
+image.plot(matrix(grid$x, nrow=musN, ncol=psN), matrix(grid$y, nrow=musN, ncol=psN), PWs-PWs[,psN],
+           col = colorRampPalette(c("blue", "cyan", "yellow", "red"))(1024),
+           main="power", xlab=expression(mu), ylab=expression(p))
+```
+
+Из первых двух графиков кажется очевидным, что критерий нечувствителен к предположению симметричности при $\mu = 0$. 
+Медиана у распределения $= \mu$. Сгенерируем выборку при $\mu = 0$ при разных $p$.
+```{r stability, eval=FALSE}
+mu = 0 
+N_exps = 100000
+samples0 <- mapply(getSample, rep(mu, psN), ps, SIMPLIFY = TRUE)
+```
+
+```{r stability plots}
+par(pty="s")
+par(mfrow=c(1,2))
+plot(x =ps ,y = samples0[1,], ylab = "p-value", xlab = expression(p), main=bquote(mu ~ "= "~ 0 ), type="l")
+plot(x =ps, y = samples0[2,], ylab = "power", xlab = expression(p), main=bquote(mu ~ "= "~ 0 ), type="l")
+```
+
+Ошибка первого рода при p<0.8 больше уровня значимости. Вероятность ошибки первого рода не должно превышать заявленного уровня значимости. Следовательно критерий чувствителен к симметричности распределения. Распределение не симметрично, так как плостность $\chi^2_4$ не симметрична относительно своего математического ожидания.
+
