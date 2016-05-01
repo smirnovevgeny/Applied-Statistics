@@ -1,0 +1,272 @@
+---
+title: "Открытие депозита"
+author: "Смирнов Евгений, 274 группа"
+date: "April 30, 2016"
+output: html_document
+---
+
+Имеются результаты обзвона 4119 клиентов португальского банка, которым предлагалось завести депозит. Известны социально-демографические характеристики клиентов, история предыдущих коммуникаций, социально-экономические показатели на момент совершения звонка. Какие признаки определяют готовность клиента открыть депозит по результатам обзвона?
+
+```{r results='hide', warning=FALSE, message=FALSE, echo=FALSE}
+library(mfp)
+library(lattice)
+library(AUC)
+library(plyr)
+library(lmtest)
+```
+
+```{r}
+data <- read.csv("deposit.csv")
+n1 = length(data$age)
+```
+Посмотрим на график data$duration:
+```{r}
+plot(data$duration)
+```
+Удалим выбросы:
+```{r}
+data <- data[data$duration < 1500,]
+```
+```{r}
+plot(data[,12])
+```
+
+```{r}
+data <- data[data[,12] < 25,]
+```
+
+```{r}
+plot(data[,14])
+```
+
+```{r}
+data <- data[data[,14] < 5,]
+```
+
+Посмотрим на распределения непрерывных признаков в классах: 
+```{r}
+par(mfrow=c(3,4), mar=c(2, 2, 2, 1))
+for (i in c(1,11:14,16:20)){
+  d1 <- density(data[data$y == "yes",i])
+  d2 <- density(data[data$y == "no",i])
+  plot(d1, col="blue", xlim=c(min(d1$x, d2$x), max(d1$x, d2$x)), ylim=c(min(d1$y, d2$y), max(d1$y, d2$y)), xlab=colnames(data)[i], main="")
+  lines(d2, col="red")
+}
+
+plot(1, type = "n", axes=FALSE, xlab="", ylab="")
+legend("center", c("yes", "no"), lty=c(1,1), col=c("blue", "red"))
+```
+
+Линейной разделимости по отдельным признакам нет.
+
+Посмотрим на таблицы сопряжённости по категориальным признакам:
+```{r}
+for (i in c(2:10,15)) {
+  print(colnames(data)[i])
+  print(ftable(data[,i], data$y))
+}
+
+```
+
+```{r}
+data <- data[data$default != "yes",]
+data <- data[data$education != "illiterate",]
+n2 = length(data$age)
+out <- 1-n2/n1
+```
+Удалено `r 100*out`% данных.
+
+```{r}
+m0 <- glm(y~1, family=binomial(), data=data)
+add1(m0, scope = as.formula(paste("~", paste(head(colnames(data), -1), collapse= " + "))), test="LRT")
+```
+# Модель 1
+
+Многомерная модель со всеми предикторами, значимыми на уровне 0.25(удалили housing, loan, day_of_week):
+
+```{r}
+m1 <- glm(y ~ age + job + marital + default + education + contact + month + duration + campaign + pdays + previous + poutcome + emp.var.rate + cons.price.idx + cons.conf.idx + euribor3m + nr.employed, family=binomial(), data=data)
+summary(m1)
+```
+
+Критерий отношения правдоподобия считает такую модель существенно лучшей константы:
+```{r, warning=FALSE}
+lrtest(m0, m1)
+```
+
+Признаки  age, marital,  nr.employed, euribor3m, previous, pdays, education, default не являются значимыми - выкинем их.
+
+```{r}
+m2 <- glm(y ~   job  + contact + month + duration + campaign + poutcome + emp.var.rate + cons.price.idx + cons.conf.idx , family=binomial(), data=data)
+summary(m2)
+```
+
+Попробуем выкинть job, как незначимый признак.
+```{r}
+m3 <- glm(y ~ contact + month + duration + campaign + poutcome + emp.var.rate + cons.price.idx + cons.conf.idx , family=binomial(), data=data)
+summary(m3)
+```
+
+```{r}
+lrtest(m3,m2)
+```
+
+Стало не хуже. Будем дальше работать с моделью 3.
+
+Модель 3 не хуже 1. В модели значимы duration, campaign, emp.var.rate, cons.price.idx, cons.conf.idx, poutcome = success, month = mar, contact = telephone.  
+```{r, warning=FALSE}
+lrtest(m3, m1)
+```
+
+Попробуем возращать признаки по одному:
+```{r}
+add1(m3, ~ . + job + housing + loan + day_of_week + age + marital + nr.employed + euribor3m + previous + pdays + education + default,  test="LRT")
+```
+Существенно лучше не стало.
+
+Проверим линейность логита по непрерывным признакам. Сглаженные диаграммы рассеяния: 
+
+```{r}
+par(mfrow=c(2,3), mar=c(4, 2, 2, 1))
+lw  <- ksmooth(data$duration, 1 * (data$y == "yes"), kernel = "normal", bandwidth=sd(data$duration))
+lsm <- log(lw$y / (1-lw$y))
+plot(lw$x, lsm, type="l", xlab="duration", ylab ="Log-odds",col="red", lwd=2)
+
+lw  <- ksmooth(data$campaign, 1 * (data$y == "yes"), kernel = "normal", bandwidth=sd(data$campaign))
+lsm <- log(lw$y / (1-lw$y))
+plot(lw$x, lsm, type="l", xlab="campaign", ylab ="Log-odds",col="red", lwd=2)
+
+lw  <- ksmooth(data$emp.var.rate, 1 * (data$y == "yes"), kernel = "normal", bandwidth=sd(data$emp.var.rate))
+lsm <- log(lw$y / (1-lw$y))
+plot(lw$x, lsm, type="l", xlab="emp.var.rate", ylab ="Log-odds",col="red", lwd=2)
+
+lw  <- ksmooth(data$cons.price.idx, 1 * (data$y == "yes"), kernel = "normal", bandwidth=sd(data$cons.price.idx))
+lsm <- log(lw$y / (1-lw$y))
+plot(lw$x, lsm, type="l", xlab="cons.price.idx", ylab ="Log-odds",col="red", lwd=2)
+
+lw  <- ksmooth(data$cons.conf.idx, 1 * (data$y == "yes"), kernel = "normal", bandwidth=sd(data$cons.conf.idx))
+lsm <- log(lw$y / (1-lw$y))
+plot(lw$x, lsm, type="l", xlab="cons.conf.idx", ylab ="Log-odds",col="red", lwd=2)
+```
+
+По всем признакам  кроме duration логит существенно нелинеен. Попробуем подобрать дробные полиномы для непрерывных признаков:
+
+```{r, warning=FALSE, cache=TRUE}
+mfp(y ~ fp(duration) + fp(campaign) + fp(emp.var.rate) + fp(cons.price.idx) + fp(cons.conf.idx) + poutcome + month + contact, family = binomial(), data=data)
+
+```
+
+```{r}
+m4 <- glm(y ~ I((duration)^0.5+(duration)^3) + campaign + emp.var.rate + cons.price.idx + cons.conf.idx + poutcome + month + contact, family=binomial(), data=data)
+summary(m4)
+```
+
+У модели с преобразованными признаками большая аномальность, то есть, она хуже объясняет выборку. Посмотрим на сглаженную диаграмму рассеяния для преобразованного признака: 
+
+```{r}
+lw  <- ksmooth( (data$duration)^0.5+(data$duration)^3, 1 * (data$y == "yes"), kernel = "normal", bandwidth=sd((data$duration)^0.5+(data$duration)^3) )
+lsm <- log(lw$y / (1-lw$y))
+plot(lw$x, lsm, type="l", xlab="duration^0.5+duration^3", ylab ="Log-odds",col="red", lwd=2)
+```
+
+Попробуем добавлять в линейную модель попарные взаимодействия:
+
+```{r, warning=FALSE, cache=TRUE}
+add1(m3, scope= ~ .^2, test="LRT")
+```  
+
+Добавим наиболее значимые взаимодействия:
+
+```{r}
+m5 <- glm(y ~  duration + campaign + emp.var.rate + cons.price.idx + cons.conf.idx + poutcome + month + contact  + month:duration + month:poutcome  + duration:emp.var.rate + duration:cons.price.idx + month:emp.var.rate, family=binomial(), data=data)
+summary(m5)
+```
+Некоторые коэффициенты не определяются, значит среди них есть линейно зависимые.
+Попробуем удалять каждый из признаков.
+```{r, warning=FALSE}
+colname <- c("duration", "campaign", "emp.var.rate", "cons.price.idx", "cons.conf.idx", "poutcome", "month", "contact", "month:duration", "month:poutcome", "duration:emp.var.rate", "duration:cons.price.idx", "month:emp.var.rate")
+cs           <- matrix(0, ncol=length(colname), nrow=length(colname))
+for (i in 1:length(colname)){
+  print(colname[i])
+  tmp <- coefficients(glm(as.formula(paste("y ~ ", paste(colname[-i], collapse=" + "))), family=binomial(), data=data))[-1]
+  print(tmp)
+}
+
+```
+Удаление одного из признаков month, emp.var.rate или month*emp.var.rate снимает мультиколинеарность. Удалим их попарное взаимодействие.
+
+```{r}
+m6 <- glm(y ~  duration + campaign + emp.var.rate + cons.price.idx + cons.conf.idx + poutcome + month + contact  + month:duration + month:poutcome  + duration:emp.var.rate + duration:cons.price.idx, family=binomial(), data=data)
+summary(m6)
+```
+
+```{r}
+lrtest(m6, m3)
+```
+По критерию отношения правдоподобия получается лучше, однако часть коэффициентов модели незначимы. Проверим, что можно безболезненно удалить:
+
+```{r, echo=FALSE, warning=FALSE}
+drop1(m6, test="LRT")
+```  
+
+Удалим duration*emp.var.rate
+
+```{r}
+m7 <- glm(y ~  duration + campaign + emp.var.rate + cons.price.idx + cons.conf.idx + poutcome + month + contact  + month:duration + duration:cons.price.idx + poutcome:month, family=binomial(), data=data)
+summary(m7)
+```
+```{r}
+lrtest(m7, m6)
+lrtest(m7, m3)
+```
+Модель получилась не хуже 6 и лучше 3. Остановимся на ней.
+
+Попробуем удалить влиятельные наблюдения:
+
+```{r, echo=FALSE}
+phat <- predict(m7, type="response")
+
+par(mfrow=c(1,1))
+plot(phat, cooks.distance(m7), pch=20, xlab=expression(hat(pi)(x[i])), ylab="Cook's distance")
+lines(c(0,1), c(0.05,0.05), col="red", lwd=2)
+
+data2 <- data[cooks.distance(m7)<0.05,]
+m8  <- glm(y ~  duration + campaign + emp.var.rate + cons.price.idx + cons.conf.idx + poutcome + month + contact  + month:duration , family=binomial(), data=data2)
+summary(m8)
+```
+
+Сравним полученные коэффициенты с коэффициентами модели, настроенной по полным данным:
+
+```{r, echo=FALSE}
+res <- cbind(coefficients(m7), coefficients(m8))
+colnames(res) <- c("All data", "Filtered data")
+res
+```
+Различия небольшие, так что оставим модель, настроенную на полных данных.
+
+```{r, echo=FALSE, fig.height=5.5, fig.width=10}
+par(mfrow=c(1,2))
+phat <- predict(m7, type="response")
+
+sens <- sensitivity(phat, factor(1 * (data$y == "yes")))
+plot(sens, col="red")
+spec <- specificity(phat, factor(1 * (data$y == "yes")))
+lines(spec$cutoffs, spec$measure, col="blue", ylab="")
+grid()
+legend("bottom", c("sensitivity", "specificity"), lty=c(1,1), col=c("red", "blue"))
+
+r <- roc(phat, factor(1 * (data$y == "yes")))
+plot(r)
+```
+При пороге 0.78 построенная модель обеспечивает чувствительность и специфичность, равные ≈ 0.9; площадь под ROC-кривой составляет 0.943551. Значимость модели по критерию отношения правдоподобия равна `r lrtest(m7,m0)$"Pr(>Chisq)"[2]`.
+
+Вывод:
+
+- В декабре и марте клиенты склонны брать кредит.
+- В августе и сентябре на готовность клиента открыть кредит влияет продолжительность последнего контакта с клиентом.
+- Для успешности камании следует проводит больше обзвонов
+- Темп изменения занятости,  consumer confidence index,  consumer price index оказывают влияние на готовность взять кредит.
+- Звонки на стационарный телефон явлюется эффективными.
+- В ноябре обзвон будет успешней, если ранее не проводились подобные кампании.
+
+<br>
