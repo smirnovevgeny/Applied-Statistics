@@ -228,10 +228,10 @@ phat <- predict(m7, type="response")
 
 par(mfrow=c(1,1))
 plot(phat, cooks.distance(m7), pch=20, xlab=expression(hat(pi)(x[i])), ylab="Cook's distance")
-lines(c(0,1), c(0.05,0.05), col="red", lwd=2)
+lines(c(0,1), c(0.10,0.10), col="red", lwd=2)
 
-data2 <- data[cooks.distance(m7)<0.05,]
-m8  <- glm(y ~  duration + campaign + emp.var.rate + cons.price.idx + cons.conf.idx + poutcome + month + contact  + month:duration , family=binomial(), data=data2)
+data2 <- data[cooks.distance(m7)<0.10,]
+m8  <- glm(y ~  duration + campaign + emp.var.rate + cons.price.idx + cons.conf.idx + poutcome + month + contact  + month:duration + duration:cons.price.idx + poutcome:month, family=binomial(), data=data2)
 summary(m8)
 ```
 
@@ -242,11 +242,11 @@ res <- cbind(coefficients(m7), coefficients(m8))
 colnames(res) <- c("All data", "Filtered data")
 res
 ```
-Различия небольшие, так что оставим модель, настроенную на полных данных.
+Различия большие по некоторым коэффициентам, возьмём модель 8.
 
 ```{r, echo=FALSE, fig.height=5.5, fig.width=10}
 par(mfrow=c(1,2))
-phat <- predict(m7, type="response")
+phat <- predict(m8, type="response")
 
 sens <- sensitivity(phat, factor(1 * (data$y == "yes")))
 plot(sens, col="red")
@@ -258,7 +258,11 @@ legend("bottom", c("sensitivity", "specificity"), lty=c(1,1), col=c("red", "blue
 r <- roc(phat, factor(1 * (data$y == "yes")))
 plot(r)
 ```
-При пороге 0.78 построенная модель обеспечивает чувствительность и специфичность, равные ≈ 0.9; площадь под ROC-кривой составляет 0.943551. Значимость модели по критерию отношения правдоподобия равна `r lrtest(m7,m0)$"Pr(>Chisq)"[2]`.
+```{r}
+m0 <- glm(y~1, family=binomial(), data=data2)
+```
+
+При пороге 0.79 построенная модель обеспечивает чувствительность и специфичность, равные ≈ 0.88; площадь под ROC-кривой составляет 0.9433456. Значимость модели по критерию отношения правдоподобия равна `r lrtest(m8,m0)$"Pr(>Chisq)"[2]`.
 
 Вывод:
 
