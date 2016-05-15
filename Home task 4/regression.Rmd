@@ -161,31 +161,31 @@ acf(diff(tSeries, 12), lag.max=5*12, main="")
 pacf(diff(tSeries, 12), lag.max=5*12, main="")
 ```
 
-Будем искать модель в окрестности ARIMA(1,1,1)(2,1,1)$_{12}$
+Будем искать модель в окрестности ARIMA(1,0,1)(2,1,1)$_{12}$
 
 Модель                     | AICc
 -------------------------- | ------------
-ARIMA(1,1,1)(1,1,1)$_{12}$ | `r Arima(tSeries, order=c(1,1,1), seasonal=c(1,1,1), lambda=LambdaOpt)$aicc`
-ARIMA(0,1,1)(1,1,1)$_{12}$ | `r Arima(tSeries, order=c(0,1,1), seasonal=c(1,1,1), lambda=LambdaOpt)$aicc`
-ARIMA(1,1,0)(1,1,1)$_{12}$ | `r Arima(tSeries, order=c(1,1,0), seasonal=c(1,1,1), lambda=LambdaOpt)$aicc`
-ARIMA(1,1,1)(1,1,0)$_{12}$ | `r Arima(tSeries, order=c(1,1,1), seasonal=c(1,1,0), lambda=LambdaOpt)$aicc`
-ARIMA(1,1,1)(0,1,1)$_{12}$ | `r Arima(tSeries, order=c(1,1,1), seasonal=c(0,1,1), lambda=LambdaOpt)$aicc`
-ARIMA(1,1,2)(1,1,1)$_{12}$ | `r Arima(tSeries, order=c(1,1,2), seasonal=c(1,1,1), lambda=LambdaOpt)$aicc`
-ARIMA(1,1,1)(1,1,2)$_{12}$ | `r Arima(tSeries, order=c(1,1,1), seasonal=c(1,1,2), lambda=LambdaOpt)$aicc`
-ARIMA(1,1,1)(2,1,1)$_{12}$ | `r Arima(tSeries, order=c(1,1,1), seasonal=c(2,1,1), lambda=LambdaOpt)$aicc`
-ARIMA(0,1,0)(1,1,1)$_{12}$ | `r Arima(tSeries, order=c(0,1,0), seasonal=c(1,1,1), lambda=LambdaOpt)$aicc`
-ARIMA(1,1,1)(0,1,0)$_{12}$ | `r Arima(tSeries, order=c(1,1,1), seasonal=c(0,1,0), lambda=LambdaOpt)$aicc`
-ARIMA(1,1,0)(0,1,1)$_{12}$ | `r Arima(tSeries, order=c(1,1,0), seasonal=c(0,1,1), lambda=LambdaOpt)$aicc`
-ARIMA(0,1,1)(0,1,1)$_{12}$ | `r Arima(tSeries, order=c(0,1,1), seasonal=c(0,1,1), lambda=LambdaOpt)$aicc`
-ARIMA(1,1,1)(0,1,1)$_{12}$ | `r Arima(tSeries, order=c(1,1,1), seasonal=c(0,1,1), lambda=LambdaOpt)$aicc`
-ARIMA(2,1,1)(0,1,0)$_{12}$ | `r Arima(tSeries, order=c(2,1,1), seasonal=c(0,1,0), lambda=LambdaOpt)$aicc`
-ARIMA(1,1,2)(0,1,1)$_{12}$ | `r Arima(tSeries, order=c(1,1,2), seasonal=c(0,1,1), lambda=LambdaOpt)$aicc`
-ARIMA(1,1,1)(0,1,2)$_{12}$ | `r Arima(tSeries, order=c(1,1,1), seasonal=c(0,1,2), lambda=LambdaOpt)$aicc`
+ARIMA(1,0,1)(2,1,1)$_{12}$ | `r Arima(tSeries, order=c(1,0,1), seasonal=c(2,1,1), lambda=LambdaOpt)$aicc`
+ARIMA(0,0,1)(2,1,1)$_{12}$ | `r Arima(tSeries, order=c(0,0,1), seasonal=c(2,1,1), lambda=LambdaOpt)$aicc`
+ARIMA(1,0,0)(2,1,1)$_{12}$ | `r Arima(tSeries, order=c(1,0,0), seasonal=c(2,1,1), lambda=LambdaOpt)$aicc`
+ARIMA(1,0,1)(2,1,0)$_{12}$ | `r Arima(tSeries, order=c(1,0,1), seasonal=c(2,1,0), lambda=LambdaOpt)$aicc`
+ARIMA(1,0,1)(1,1,1)$_{12}$ | `r Arima(tSeries, order=c(1,0,1), seasonal=c(1,1,1), lambda=LambdaOpt)$aicc`
+ARIMA(1,0,2)(2,1,1)$_{12}$ | `r Arima(tSeries, order=c(1,0,2), seasonal=c(2,1,1), lambda=LambdaOpt)$aicc`
+ARIMA(1,0,1)(2,1,2)$_{12}$ | `r Arima(tSeries, order=c(1,0,1), seasonal=c(2,1,2), lambda=LambdaOpt)$aicc`
+ARIMA(1,0,1)(3,1,1)$_{12}$ | `r Arima(tSeries, order=c(1,0,1), seasonal=c(3,1,1), lambda=LambdaOpt)$aicc`
+ARIMA(0,0,0)(2,1,1)$_{12}$ | `r Arima(tSeries, order=c(0,0,0), seasonal=c(2,1,1), lambda=LambdaOpt)$aicc`
+ARIMA(1,0,1)(1,1,0)$_{12}$ | `r Arima(tSeries, order=c(1,0,1), seasonal=c(1,1,0), lambda=LambdaOpt)$aicc`
+ARIMA(1,0,0)(1,1,1)$_{12}$ | `r Arima(tSeries, order=c(1,0,0), seasonal=c(1,1,1), lambda=LambdaOpt)$aicc`
+ARIMA(0,0,1)(1,1,1)$_{12}$ | `r Arima(tSeries, order=c(0,0,1), seasonal=c(1,1,1), lambda=LambdaOpt)$aicc`
+ARIMA(1,0,1)(0,1,1)$_{12}$ | `r Arima(tSeries, order=c(1,0,1), seasonal=c(0,1,1), lambda=LambdaOpt)$aicc`
+ARIMA(2,0,1)(0,1,1)$_{12}$ | `r Arima(tSeries, order=c(2,0,1), seasonal=c(0,1,0), lambda=LambdaOpt)$aicc`
+ARIMA(1,0,2)(0,1,1)$_{12}$ | `r Arima(tSeries, order=c(1,0,2), seasonal=c(0,1,1), lambda=LambdaOpt)$aicc`
+ARIMA(1,0,1)(0,1,2)$_{12}$ | `r Arima(tSeries, order=c(1,0,1), seasonal=c(0,1,2), lambda=LambdaOpt)$aicc`
 
-Возьмём модель ARIMA(0,1,1)(0,1,1)$_{12}$, как модель с наименьшим AIC.
+Возьмём модель ARIMA(1,0,1)(0,1,1)$_{12}$, как модель с наименьшим AIC.
 
 ```{r, echo=TRUE, fig.height=4.5, fig.width=10}
-fit <- Arima(tSeries, order=c(0,1,1), seasonal=c(0,1,1), lambda=LambdaOpt)
+fit <- Arima(tSeries, order=c(1,0,1), seasonal=c(0,1,1), lambda=LambdaOpt)
 res <- residuals(fit)
 plot(res)
 ```
@@ -226,7 +226,7 @@ hist(res)
 
 Настроив выбранную модель на обучающей выборке, посчитаем её качество на тестовой:
 ```{r, echo=TRUE, fig.height=5.5, fig.width=10}
-fitShort <- Arima(trainSeries, order=c(0,1,1), seasonal=c(0,1,1), lambda=LambdaOpt)
+fitShort <- Arima(trainSeries, order=c(1,0,1), seasonal=c(0,1,1), lambda=LambdaOpt)
 fc       <- forecast(fitShort, h=D)
 accuracy(fc, testSeries)
 plot(forecast(fitShort, h=D), ylab=xname, xlab="Time")
@@ -239,7 +239,7 @@ lines(tSeries, col="red")
 fit.auto <- auto.arima(tSeries, lambda = LambdaOpt)
 fit.auto
 ```
-Предлагается модель ARIMA(1,1,1,0)(2,0,0)$_{12}$. Её AICc выше, чем у модели, подобранной вручную. Посмотрим на её остатки:
+Предлагается модель ARIMA(1,1,0)(2,0,0)$_{12}$. Её AICc выше, чем у модели, подобранной вручную. Посмотрим на её остатки:
 ```{r, echo=TRUE, fig.height=4.5, fig.width=10}
 res.auto <- residuals(fit.auto)
 plot(res.auto)
@@ -303,6 +303,8 @@ lines(c(min(res, res.auto), max(res, res.auto))*2, c(min(res, res.auto), max(res
 
 dm.test(res, res.auto)
 ```
+
+В целом автоматическая модель сложнее, её остатки не лучше, AICc — больше, и ошибка на тесте больше, так что остановимся на модели, подобранной вручную.
 
 ## Итоговое сравнение
 Сравним остатки лучших моделей ARIMA и ETS, одинаково обрезав их начало так, чтобы у обоих методов они были правильно определены:
