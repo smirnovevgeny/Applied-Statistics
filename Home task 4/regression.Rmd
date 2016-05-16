@@ -321,13 +321,13 @@ plot(res, res.ets,
 dm.test(res, res.ets)
 dm.test(res, res.ets, alternative = "less")
 ```
-Согласно критерию Диболда-Мариано, прогнозы метода ARIMA не значимо менее точные, но её остатки больше, поэтому выберем прогноз найденный ETS.
+Согласно критерию Диболда-Мариано, прогнозы метода ARIMA не хуже, её остатки больше, но анамальность меньше, чем у модели ETS, значит будем использовать модель ARIMA, настроенную в ручную.
 
 
 ### Финальный прогноз
 
 ```{r, echo=TRUE, fig.height=5.5, fig.width=10}
-fl <- forecast(fit.ets, h=D)
+fl <- forecast(fit, h=D)
 print(fl)
 plot(fl, ylab=xname, xlab="Year", col="red")
 ```
