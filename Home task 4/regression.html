@@ -521,7 +521,15 @@ lines(c(min(res, res.auto), max(res, res.auto))*2, c(min(res, res.auto), max(res
 ## DM = -2.7109, Forecast horizon = 1, Loss function power = 2,
 ## p-value = 0.007618
 ## alternative hypothesis: two.sided</code></pre>
-<p>В целом автоматическая модель сложнее, её остатки не лучше, AICc — больше, и ошибка на тесте больше, так что остановимся на модели, подобранной вручную.</p>
+<pre class="r"><code>dm.test(res, res.auto, &quot;less&quot;)</code></pre>
+<pre><code>## 
+##  Diebold-Mariano Test
+## 
+## data:  resres.auto
+## DM = -2.7109, Forecast horizon = 1, Loss function power = 2,
+## p-value = 0.003809
+## alternative hypothesis: less</code></pre>
+<p>Согласно критерию Диболда-Мариано, прогнозы метода ARIMA c автоматически подобранными параметрами значимо менее точные, поэтому в качестве финального выберем прогноз найденной вручную аримы.</p>
 </div>
 </div>
 <div id="-" class="section level2">
@@ -544,15 +552,7 @@ plot(res, res.ets,
 ## DM = 0.5545, Forecast horizon = 1, Loss function power = 2,
 ## p-value = 0.5802
 ## alternative hypothesis: two.sided</code></pre>
-<pre class="r"><code>dm.test(res, res.ets, alternative = &quot;less&quot;)</code></pre>
-<pre><code>## 
-##  Diebold-Mariano Test
-## 
-## data:  resres.ets
-## DM = 0.5545, Forecast horizon = 1, Loss function power = 2,
-## p-value = 0.7099
-## alternative hypothesis: less</code></pre>
-<p>Согласно критерию Диболда-Мариано, прогнозы метода ARIMA не хуже, её остатки больше, но анамальность меньше, чем у модели ETS, значит будем использовать модель ARIMA, настроенную в ручную.</p>
+<p>Согласно критерию Диболда-Мариано, прогнозы метода ARIMA не хуже, но AICc меньше, чем у модели ETS как и ошибка на тестовой выборке, значит будем использовать модель ARIMA, настроенную в ручную.</p>
 <div id="-" class="section level3">
 <h3>Финальный прогноз</h3>
 <pre class="r"><code>fl &lt;- forecast(fit, h=D)
