@@ -70,23 +70,6 @@ grid()
 
 Преобразование стабилизирует дисперсию, будем его использовать.
 
-```{r}
-y<-BoxCox(tSeries, LambdaOpt)
-n<- length(y)
-m<- ets(y)
-k<- length(m$par)
-rss <- sum(m$residuals^2)
-m1<- ets(y[1:109])
-k1<- length(m1$par)
-rss1 <- sum(m1$residuals^2)
-m2<- ets(y[110:n])
-k2<- (m2$aic + 2*m2$loglik)/2
-rss2 <- sum(m2$residuals^2)
-f <- ((rss-rss1-rss2)/(k1+k2-k)) / ((rss1-rss2)/(n-k1-k2))
-pf(f, k1+k2-k, n-k1-k2)
-```
-
-
 
 ## Прогноз ETS
 ```{r, echo=TRUE}
