@@ -8,6 +8,7 @@ output: html_document
 Имеются результаты обзвона 4119 клиентов португальского банка, которым предлагалось завести депозит. Известны социально-демографические характеристики клиентов, история предыдущих коммуникаций, социально-экономические показатели на момент совершения звонка. Какие признаки определяют готовность клиента открыть депозит по результатам обзвона?
 
 ```{r results='hide', warning=FALSE, message=FALSE, echo=FALSE}
+setwd("~/Rprojects/прикладная статистика/Home task 3/")
 library(mfp)
 library(lattice)
 library(AUC)
@@ -228,9 +229,9 @@ phat <- predict(m7, type="response")
 
 par(mfrow=c(1,1))
 plot(phat, cooks.distance(m7), pch=20, xlab=expression(hat(pi)(x[i])), ylab="Cook's distance")
-lines(c(0,1), c(0.10,0.10), col="red", lwd=2)
+lines(c(0,1), c(0.05,0.05), col="red", lwd=2)
 
-data2 <- data[cooks.distance(m7)<0.10,]
+data2 <- data[cooks.distance(m7)<0.05,]
 m8  <- glm(y ~  duration + campaign + emp.var.rate + cons.price.idx + cons.conf.idx + poutcome + month + contact  + month:duration + duration:cons.price.idx + poutcome:month, family=binomial(), data=data2)
 summary(m8)
 ```
@@ -248,29 +249,30 @@ res
 par(mfrow=c(1,2))
 phat <- predict(m8, type="response")
 
-sens <- sensitivity(phat, factor(1 * (data$y == "yes")))
+sens <- sensitivity(phat, factor(1 * (data2$y == "yes")))
 plot(sens, col="red")
-spec <- specificity(phat, factor(1 * (data$y == "yes")))
+spec <- specificity(phat, factor(1 * (data2$y == "yes")))
 lines(spec$cutoffs, spec$measure, col="blue", ylab="")
 grid()
 legend("bottom", c("sensitivity", "specificity"), lty=c(1,1), col=c("red", "blue"))
 
-r <- roc(phat, factor(1 * (data$y == "yes")))
+r <- roc(phat, factor(1 * (data2$y == "yes")))
 plot(r)
 ```
 ```{r}
 m0 <- glm(y~1, family=binomial(), data=data2)
 ```
 
-При пороге 0.79 построенная модель обеспечивает чувствительность и специфичность, равные ≈ 0.88; площадь под ROC-кривой составляет 0.9433456. Значимость модели по критерию отношения правдоподобия равна `r lrtest(m8,m0)$"Pr(>Chisq)"[2]`.
+При пороге 0.79 построенная модель обеспечивает чувствительность и специфичность, равные ≈ 0.88; площадь под ROC-кривой составляет 0.9441221. Значимость модели по критерию отношения правдоподобия равна `r lrtest(m8,m0)$"Pr(>Chisq)"[2]`.
 
 Вывод:
 
-- В декабре и марте клиенты склонны брать кредит.
-- В августе и сентябре на готовность клиента открыть кредит влияет продолжительность последнего контакта с клиентом.
-- Для успешности камании следует проводит больше обзвонов
-- Темп изменения занятости,  consumer confidence index,  consumer price index оказывают влияние на готовность взять кредит.
-- Звонки на стационарный телефон явлюется эффективными.
-- В ноябре обзвон будет успешней, если ранее не проводились подобные кампании.
+- Проведение кампании повышает число выданных кредитов в `r round(1/exp(coefficients(m8))["campaign"], 2)` раз (`r round(1/exp(confint(m8))["campaign",c(2,1)], 2)`).
+- В декабре и марте берут кредиты в соответственно `r round(exp(coefficients(m8))["monthdec"], 2)` (`r round(exp(confint(m8))["monthdec",c(2,1)], 2)`) и `r round(exp(coefficients(m8))["monthmar"], 2)` (`r round(exp(confint(m8))["monthmar",c(2,1)], 2)`) раз реже.
+- В августе и мая готовность клиента взять кредит понижается в `r round(exp(coefficients(m8))["duration:monthaug"],3)` (`r round(exp(confint(m8))["duration:monthaug",c(2,1)], 2)`) и  в `r round(exp(coefficients(m8))["duration:monthmay"],3)` (`r round(exp(confint(m8))["duration:monthmay",c(2,1)], 3)`) раза соответственно при увеличении длительности контакта на 1 минуту.
+- Предыдущие обзвоны понижают колличество взятых кредитов в `r round(exp(coefficients(m8))["poutcomenonexistent"], 2)` раз (`r round(exp(confint(m8))["poutcomenonexistent",c(2,1)], 2)`), а предыдущие успешные обзвоны в `r round(exp(coefficients(m8))["poutcomesuccess"], 2)` раз (`r round(exp(confint(m8))["poutcomesuccess",c(2,1)], 2)`).
+- Изменение темпа занятости на одну единицу увеличивает в `r round(1/exp(coefficients(m8))["emp.var.rate"], 2)` раза (`r round(1/exp(confint(m8))["emp.var.rate",c(2,1)], 2)`) ,  consumer confidence index на одну единицу увеличивает в `r round(1/exp(coefficients(m8))["emp.var.rate"], 2)` раза (`r round(1/exp(confint(m8))["emp.var.rate",c(2,1)], 2)`) увеличивает,  consumer price index на одну единицу уменьшает в `r round(exp(coefficients(m8))["cons.price.idx"], 2)` раза (`r round(exp(confint(m8))["cons.price.idx",c(2,1)], 2)`)  готовность взять кредит.
+- Звонки на стационарный телефон эффективнее в `r round(1/exp(coefficients(m8))["contacttelephone"], 2)` раз (`r round(1/exp(confint(m8))["contacttelephone",c(2,1)], 2)`).
+- В ноябре обзвон будет успешней в `r round(1/exp(coefficients(m8))["poutcomenonexistent:monthnov"], 2)` раз , если ранее не проводились подобные кампании (`r round(1/exp(confint(m8))["poutcomenonexistent:monthnov",c(2,1)], 2)`).
 
 <br>
